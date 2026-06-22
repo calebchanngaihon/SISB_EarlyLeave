@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <!-- Ensure perfect responsive viewport scaling for both iOS and Android browsers inside iframes -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Student Early Leave Portal</title>
+  
+  <style>
+    /* =========================================================================
+       DESIGN SYSTEM & THEME TOKENS
+       ========================================================================= */
+    :root { 
+      --primary: #004b87;       /* Deep Academy Blue */
+      --primary-hover: #00335e; /* Hover blue */
+      --success: #28a745;       /* Dynamic Unlocked Green */
+      --danger: #dc3545;        /* Cancellation / Error Red */
+      --bg: #f4f7f6;            /* Neutral light background */
+      --card-bg: #ffffff;
+      --text-main: #333333;
+      --text-muted: #666666;
+    }
+    
+    /* Global Reset & Base Layout */
+    body { 
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      background-color: var(--bg); 
+      margin: 0; 
+      padding: 15px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      min-height: 100vh; 
+      box-sizing: border-box;
+    }
+    
+    /* Central Application Wrapper */
+    .container { 
+      background: var(--card-bg); 
+      border-radius: 16px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+      width: 100%; 
+      max-width: 400px; 
+      padding: 30px 24px; 
+      box-sizing: border-box; 
+      text-align: center; 
+      border-top: 5px solid var(--primary);
+    }
+    
+    .logo { 
+      max-width: 130px; 
+      height: auto;
+      margin-bottom: 20px; 
+    }
+    
+    h2 { 
+      color: var(--primary); 
+      margin-top: 0; 
+      font-size: 22px; 
+      font-weight: 700;
+    }
+    
+    /* =========================================================================
+       FORM ELEMENTS & INTERACTION STATES
+       ========================================================================= */
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    textarea { 
+      width: 100%; 
+      padding: 12px; 
+      margin: 4px 0 16px; 
+      border: 1.5px solid #e2e8f0; 
+      border-radius: 8px; 
+      box-sizing: border-box; 
+      font-size: 15px; 
+      font-family: inherit; 
+      resize: none;
+      transition: border-color 0.2s ease;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    input[type="time"] { 
+      width: 100%; 
+      max-width: 160px; 
+      padding: 12px; 
+      margin: 4px 0 16px; 
+      border: 1.5px solid #e2e8f0; 
+      border-radius: 8px; 
+      box-sizing: border-box; 
+      font-size: 16px; 
+      font-family: inherit; 
+      background-color: white; 
+      color: var(--text-main); 
+      display: block; 
+    }
+    input[type="time"]:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    
+    /* Buttons */
+    button { 
+      background-color: var(--primary); 
+      color: white; 
+      border: none; 
+      padding: 14px 20px; 
+      width: 100%; 
+      border-radius: 8px; 
+      font-size: 16px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+    button:active {
+      transform: scale(0.98);
+    }
+    button:disabled { 
+      background-color: #cbd5e1; 
+      cursor: not-allowed; 
+      transform: none;
+    }
+    .btn-danger { 
+      background-color: transparent; 
+      color: var(--danger); 
+      border: 1.5px solid var(--danger); 
+      margin-top: 12px; 
+    }
+    .btn-danger:hover {
+      background-color: #fff5f5;
+    }
+    .btn-secondary { 
+      background-color: transparent; 
+      color: var(--text-muted); 
+      border: 1.5px solid #cbd5e1; 
+      margin-top: 15px; 
+    }
+    .btn-secondary:hover {
+      background-color: #f8fafc;
+    }
+    
+    /* Live Summary Card */
+    .dynamic-statement { 
+      background: #f8fafc; 
+      padding: 16px; 
+      border-radius: 10px; 
+      font-size: 14px; 
+      color: var(--text-main); 
+      margin-bottom: 24px; 
+      text-align: left; 
+      border-left: 4px solid var(--primary);
+    }
+    
+    /* Routing views */
+    .view { display: none; } 
+    .view.active { display: block; }
+    
+    /* Badges */
+    .status-badge { 
+      display: inline-block; 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      font-weight: 700; 
+      font-size: 14px;
+      margin: 15px 0; 
+    }
+    
+    /* CSS Spinner */
+    .spinner { 
+      border: 4px solid #f3f3f3; 
+      border-top: 4px solid var(--primary); 
+      border-radius: 50%; 
+      width: 36px; 
+      height: 36px; 
+      animation: spin 1s linear infinite; 
+      margin: 20px auto; 
+    }
+    @keyframes spin { 
+      100% { transform: rotate(360deg); } 
+    }
+    
+    /* =========================================================================
+       ENHANCED LIVE EXIT SLIP EFFECTS
+       ========================================================================= */
+    /* Thick secure border color will dynamically adapt to the day of the week */
+    .exit-slip-card { 
+      border: 8px solid #cbd5e1; 
+      border-radius: 16px; 
+      padding: 30px 15px; 
+      background: #ffffff; 
+      transition: all 0.5s ease; 
+    }
+    /* Rainbow background gradient transitions if authorized to depart */
+    .exit-slip-card.unlocked { 
+      background: linear-gradient(-45deg, #e0f7fa, #ffffff, #e8f5e9, #ffffff); 
+      background-size: 400% 400%; 
+      animation: gradientBG 6s ease infinite, cardGlow 2.5s infinite; 
+    }
+    @keyframes gradientBG { 
+      0% { background-position: 0% 50%; } 
+      50% { background-position: 100% 50%; } 
+      100% { background-position: 0% 50%; } 
+    }
+    @keyframes cardGlow { 
+      0% { box-shadow: 0 0 5px rgba(40, 167, 69, 0.2); } 
+      50% { box-shadow: 0 0 25px rgba(40, 167, 69, 0.5); } 
+      100% { box-shadow: 0 0 5px rgba(40, 167, 69, 0.2); } 
+    }
+
+    .live-title { 
+      font-weight: 900; 
+      font-size: 30px; 
+      letter-spacing: 2px; 
+      margin-bottom: 12px; 
+      text-transform: uppercase; 
+    }
+    .unlocked .pulse-indicator { 
+      color: var(--success); 
+      animation: textPulse 1.5s infinite ease-in-out; 
+    }
+    @keyframes textPulse { 
+      0% { opacity: 0.6; transform: scale(0.98); } 
+      50% { opacity: 1; transform: scale(1.04); } 
+      100% { opacity: 0.6; transform: scale(0.98); } 
+    }
+    
+    .clock-display { 
+      font-size: 36px; 
+      font-weight: 900; 
+      color: #1e293b; 
+      margin: 15px 0; 
+      font-family: "Courier New", Courier, monospace; 
+      letter-spacing: 1px;
+    }
+    .student-info { 
+      font-size: 24px; 
+      font-weight: 800; 
+      color: #0f172a;
+      margin: 5px 0; 
+    }
+    .date-display { 
+      font-size: 15px; 
+      font-weight: 700; 
+      color: var(--primary); 
+      margin-bottom: 10px; 
+      text-transform: uppercase;
+    }
+    .lock-message { 
+      font-size: 14px; 
+      color: var(--danger); 
+      font-weight: 700; 
+      margin-top: 15px; 
+    }
+    
+    /* =========================================================================
+       MODAL POPUP (Cancel confirmation)
+       ========================================================================= */
+    .modal-overlay { 
+      display: none; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100%; 
+      height: 100%; 
+      background: rgba(15, 23, 42, 0.6); /* Dark tint backdrop */
+      z-index: 1000; 
+      justify-content: center; 
+      align-items: center; 
+      padding: 20px; 
+      box-sizing: border-box; 
+    }
+    .modal-content { 
+      background: white; 
+      padding: 28px 24px; 
+      border-radius: 12px; 
+      text-align: center; 
+      width: 100%; 
+      max-width: 340px; 
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+    }
+    .modal-content h3 { 
+      margin-top: 0; 
+      color: var(--danger); 
+      font-size: 20px;
+    }
+    .modal-content p {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .modal-btns { 
+      display: flex; 
+      gap: 12px; 
+      margin-top: 24px; 
+    }
+  </style>
+</head>
+<body>
+
+<!-- CANCEL CONFIRMATION MODAL -->
+<div class="modal-overlay" id="cancel-modal">
+  <div class="modal-content">
+    <h3>Cancel Request?</h3>
+    <p>Are you sure you want to cancel this early leave request? If you cancel, you will have to re-apply from the beginning.</p>
+    <div class="modal-btns">
+      <button style="background-color: #64748b;" onclick="closeModal()">Keep Request</button>
+      <button style="background-color: var(--danger);" onclick="confirmCancel()">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Dynamic server-side logo injection from code.gs config -->
+  <img src="<?= SCHOOL_LOGO_URL ?>" alt="School Logo" class="logo">
+  
+  <!-- VIEW 1: LOADING STATE (Awaiting validation from Session API) -->
+  <div id="loading-view" class="view active">
+    <h2>Early Leave Portal</h2>
+    <p style="color: var(--text-muted); font-size: 14px;">Authenticating your school account...</p>
+    <div class="spinner"></div>
+  </div>
+
+  <!-- VIEW 2: APPLICATION FORM (Rendered if no active requests exist today) -->
+  <div id="form-view" class="view">
+    <h2>Apply for Early Leave</h2>
+    
+    <div class="dynamic-statement">
+      <div style="text-align: center; font-size: 16px; margin-bottom: 10px;">
+        <strong><span id="display-name">Loading...</span></strong>
+      </div>
+      <div style="text-align: center; line-height: 1.5;">
+        Applying for early leave on <strong id="display-date"></strong> <br>
+        at <strong id="display-time" style="color: var(--danger);">[Select Time]</strong>.
+      </div>
+    </div>
+    
+    <div style="text-align: left;">
+      <label for="time-input">Time of Departure:</label>
+      <input type="time" id="time-input" onchange="updateTimeDisplay()" required>
+      
+      <label for="reason-input">Reason for Early Leave:</label>
+      <textarea id="reason-input" rows="2" placeholder="E.g., Specialist medical appointment..." required></textarea>
+    </div>
+    
+    <button id="submit-btn" onclick="submitApplication()">Submit Application</button>
+    <div id="error-msg" style="color: var(--danger); margin-top: 12px; font-weight: 600; font-size: 14px;"></div>
+  </div>
+
+  <!-- VIEW 3: WAITING STATE (Shows status details when waiting for parent or office signatures) -->
+  <div id="status-view" class="view">
+    <h2>Request Pending</h2>
+    <div class="spinner"></div>
+    <div id="status-badge" class="status-badge">Waiting...</div>
+    <p id="status-desc" style="color: var(--text-muted); font-size: 14px; line-height: 1.5;"></p>
+    <p style="font-size: 14px; color: var(--text-main);">Requested Leave Time: <strong id="waiting-time"></strong></p>
+    
+    <button class="btn-secondary" id="resend-btn" onclick="resendEmail()">Stuck? Resend Notification</button>
+    <p id="resend-msg" style="font-size: 13px; font-weight: bold; margin-top: 8px;"></p>
+    
+    <button class="btn-danger" onclick="openModal()">Cancel Request</button>
+  </div>
+
+  <!-- VIEW 4: SECURITY GATE PASS (Unlocked only within 5 minutes of approved leave time) -->
+  <div id="pass-view" class="view">
+    
+    <!-- Sub-state A: Approved but too early to depart -->
+    <div id="locked-state-container" style="display: none; text-align: center;">
+      <h2>Request Approved</h2>
+      <div class="status-badge" style="background: #d4edda; color: #155724; border: 1px solid #c3e6cb;">Authorized</div>
+      <p style="color: var(--text-muted); font-size: 14px; line-height: 1.5;">Your request is fully authorized, but the exit slip is not yet active.</p>
+      <p style="font-size: 15px;">Slip unlocks at: <strong id="locked-leave-time" style="font-size: 18px; color: var(--primary);"></strong></p>
+      <p style="font-size: 13px; font-weight: 700; color: var(--danger); margin-top: 25px; text-transform: uppercase; letter-spacing: 0.5px;">Do not proceed to the gatehouse yet.</p>
+    </div>
+
+    <!-- Sub-state B: Active, glowing dynamic exit slip shown to gatehouse guards -->
+    <div id="unlocked-state-container" style="display: none;">
+      <div class="exit-slip-card" id="exit-slip-card">
+        <div class="pulse-indicator live-title" id="pulse-text">EXIT SLIP</div>
+        <div class="date-display" id="slip-date">Date</div>
+        <div class="student-info" id="slip-name">Name</div>
+        <div style="font-size: 16px; color: var(--text-muted); margin-bottom: 15px; font-weight: 600;" id="slip-class">Class</div>
+        <div class="clock-display" id="live-clock">--:--:--</div>
+        
+        <div class="lock-message" style="color: var(--success); font-size: 18px; font-weight: 900; margin-top: 20px; text-transform: uppercase;">
+          APPROVED DEPARTURE: <span id="slip-approved-time" style="font-size: 22px;"></span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-danger" onclick="openModal()">Cancel Request</button>
+  </div>
+</div>
+
+<script>
+  // Global application variables
+  let currentToken = null;
+  let approvedLeaveTime = null;
+  let pollingInterval = null;
+  let clockInterval = null;
+  
+  // Custom security border colors assigned to days of the week (Sun - Sat) for visual gate verification
+  const dailyColors = ["#8b5cf6", "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1"];
+
+  // Initialize page on load - fetch authenticated student from Google session
+  window.onload = () => {
+    google.script.run
+      .withSuccessHandler(handleInitData)
+      .withFailureHandler(showError)
+      .getStudentData();
+  };
+
+  /**
+   * Generates dynamic client-side date string in Bangkok locale.
+   */
+  function getTodayString() {
+    return new Date().toLocaleDateString('en-US', { 
+      timeZone: "Asia/Bangkok", 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  }
+
+  /**
+   * Populates student details and initiates request state check.
+   */
+  function handleInitData(student) {
+    if (!student.found) {
+      document.getElementById('loading-view').innerHTML = `
+        <h3 style='color: var(--danger); margin-bottom: 8px;'>Access Denied</h3>
+        <p style='font-size: 14px; color: var(--text-muted);'>No matching student record found. Please verify your Google Session login.</p>
+      `;
+      return;
+    }
+    document.getElementById('display-name').innerText = `${student.nickname} (${student.class})`;
+    document.getElementById('slip-name').innerText = student.nickname;
+    document.getElementById('slip-class').innerText = student.class;
+    
+    const todayStr = getTodayString();
+    document.getElementById('display-date').innerText = todayStr;
+    document.getElementById('slip-date').innerText = todayStr;
+    
+    checkStatus();
+  }
+
+  /**
+   * Realtime reactive time preview in the main instruction card.
+   */
+  function updateTimeDisplay() {
+    const timeVal = document.getElementById('time-input').value;
+    document.getElementById('display-time').innerText = timeVal ? timeVal : "[Select Time]";
+  }
+
+  /**
+   * Requests active request record from backend Spreadsheet.
+   */
+  function checkStatus() {
+    google.script.run
+      .withSuccessHandler(handleStatusUpdate)
+      .withFailureHandler(showError)
+      .getRequestStatus();
+  }
+
+  /**
+   * Transitions the client UI views depending on request stage.
+   */
+  function handleStatusUpdate(req) {
+    if (!req || req.status === "NONE" || req.status === "CANCELLED" || req.status === "REJECTED") {
+      if (req && req.status === "REJECTED") {
+        document.getElementById('error-msg').innerText = "Your previous request was rejected. You can submit a new request.";
+      }
+      switchView('form-view');
+      stopPolling(); 
+      stopClock();
+    } else if (req.status === "WAITING_PARENT" || req.status === "WAITING_OFFICE") {
+      currentToken = req.token;
+      document.getElementById('waiting-time').innerText = req.leaveTime;
+      switchView('status-view');
+      
+      const badge = document.getElementById('status-badge');
+      if (req.status === "WAITING_PARENT") {
+        badge.innerText = "Waiting on Parent"; 
+        badge.style.background = "#fff3cd"; 
+        badge.style.color = "#856404";
+        badge.style.border = "1px solid #ffeeba";
+        document.getElementById('status-desc').innerText = "An approval request was sent to your parent's email. Waiting for consent.";
+      } else {
+        badge.innerText = "Waiting on Office"; 
+        badge.style.background = "#cce5ff"; 
+        badge.style.color = "#004085";
+        badge.style.border = "1px solid #b8daff";
+        document.getElementById('status-desc').innerText = "Parental consent verified! Awaiting physical/academic clearance from Sixth Form Office.";
+      }
+      startPolling();
+    } else if (req.status === "APPROVED") {
+      currentToken = req.token; 
+      approvedLeaveTime = req.leaveTime;
+      switchView('pass-view'); 
+      stopPolling(); 
+      activateExitSlip();
+    }
+  }
+
+  /**
+   * Client-side form validation and request submission gateway.
+   */
+  function submitApplication() {
+    const time = document.getElementById('time-input').value;
+    const reason = document.getElementById('reason-input').value.trim();
+    if (!time || !reason) {
+      document.getElementById('error-msg').innerText = "Please complete all fields before submitting.";
+      return;
+    }
+
+    // Security check: Verify planned departure is in the future
+    const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" });
+    const bkkNow = new Date(nowStr);
+    const timeParts = time.split(":");
+    const inputMins = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+    const currentMins = bkkNow.getHours() * 60 + bkkNow.getMinutes();
+    
+    if (inputMins <= currentMins) {
+      document.getElementById('error-msg').innerText = "Invalid Time: Please select a departure time in the future.";
+      return;
+    }
+    
+    document.getElementById('submit-btn').disabled = true;
+    document.getElementById('submit-btn').innerText = "Submitting Request...";
+    document.getElementById('error-msg').innerText = "";
+    
+    google.script.run
+      .withSuccessHandler((res) => {
+        currentToken = res.token;
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('submit-btn').innerText = "Submit Application";
+        checkStatus(); 
+      })
+      .withFailureHandler((err) => {
+        document.getElementById('submit-btn').disabled = false;
+        document.getElementById('submit-btn').innerText = "Submit Application";
+        showError(err);
+      })
+      .submitRequest(reason, time);
+  }
+
+  // Modal Control Functions
+  function openModal() { document.getElementById('cancel-modal').style.display = 'flex'; }
+  function closeModal() { document.getElementById('cancel-modal').style.display = 'none'; }
+  
+  /**
+   * Deletes and clears the active request in the database.
+   */
+  function confirmCancel() {
+    closeModal(); 
+    if (!currentToken) return;
+    
+    switchView('loading-view'); 
+    document.getElementById('loading-view').innerHTML = "<h2>Cancelling Leave Request...</h2><div class='spinner'></div>";
+    stopPolling(); 
+    stopClock();
+    
+    google.script.run
+      .withSuccessHandler((res) => {
+        if (res && !res.success) {
+           showError(res.message);
+           return;
+        }
+        // Safely clear inputs after successful cancel
+        document.getElementById('time-input').value = ""; 
+        document.getElementById('reason-input').value = "";
+        document.getElementById('loading-view').innerHTML = `
+          <h2>Early Leave Portal</h2>
+          <p style="color: var(--text-muted); font-size: 14px;">Authenticating your school account...</p>
+          <div class="spinner"></div>
+        `;
+        updateTimeDisplay(); 
+        checkStatus(); 
+      })
+      .withFailureHandler(showError)
+      .cancelRequest(currentToken);
+  }
+
+  /**
+   * Resends notification (parent action or office verification) with a server-side rate limit checks.
+   */
+  function resendEmail() {
+    if (!currentToken) return;
+    const btn = document.getElementById('resend-btn'); 
+    btn.disabled = true; 
+    btn.innerText = "Dispatching Link...";
+    document.getElementById('resend-msg').innerText = "";
+    
+    google.script.run
+      .withSuccessHandler((res) => {
+        document.getElementById('resend-msg').innerText = res.message;
+        document.getElementById('resend-msg').style.color = res.success ? "var(--success)" : "var(--danger)";
+        btn.innerText = "Stuck? Resend Notification"; 
+        setTimeout(() => { btn.disabled = false; }, 3000);
+      })
+      .withFailureHandler((err) => {
+        document.getElementById('resend-msg').innerText = "Connection lost. Please retry.";
+        document.getElementById('resend-msg').style.color = "var(--danger)";
+        btn.innerText = "Stuck? Resend Notification"; 
+        btn.disabled = false;
+      })
+      .resendNotification(currentToken);
+  }
+
+  /**
+   * Actively runs the security gate pass clocks.
+   * Auto-unlocks and changes colors within 5 minutes of departure time.
+   */
+  function activateExitSlip() {
+    const lockedContainer = document.getElementById('locked-state-container');
+    const unlockedContainer = document.getElementById('unlocked-state-container');
+    const slipCard = document.getElementById('exit-slip-card');
+    
+    document.getElementById('locked-leave-time').innerText = approvedLeaveTime;
+    document.getElementById('slip-approved-time').innerText = approvedLeaveTime;
+
+    // Set secure border color dynamically mapping to the day of week
+    const bkkNowForColor = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+    const todayColor = dailyColors[bkkNowForColor.getDay()];
+    slipCard.style.borderColor = todayColor;
+    
+    const timeParts = approvedLeaveTime.split(":");
+    const unlockMins = (parseInt(timeParts[0]) * 60 + parseInt(timeParts[1])) - 5; // Unlocks 5 minutes early
+
+    if (clockInterval) clearInterval(clockInterval);
+    
+    clockInterval = setInterval(() => {
+      const bkkNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }));
+      document.getElementById('live-clock').innerText = bkkNow.toLocaleTimeString('en-GB', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      });
+
+      // State check logic: switches slip visually to unlocked if current minutes >= unlock target
+      if (bkkNow.getHours() * 60 + bkkNow.getMinutes() >= unlockMins) {
+        lockedContainer.style.display = 'none';
+        unlockedContainer.style.display = 'block';
+        slipCard.classList.add('unlocked');
+      } else {
+        lockedContainer.style.display = 'block';
+        unlockedContainer.style.display = 'none';
+        slipCard.classList.remove('unlocked');
+      }
+    }, 1000);
+  }
+
+  // Helpers and view controllers
+  function startPolling() { 
+    if (!pollingInterval) pollingInterval = setInterval(checkStatus, 10000); 
+  }
+  
+  function stopPolling() { 
+    if (pollingInterval) { 
+      clearInterval(pollingInterval); 
+      pollingInterval = null; 
+    } 
+  }
+  
+  function stopClock() { 
+    if (clockInterval) { 
+      clearInterval(clockInterval); 
+      clockInterval = null; 
+    } 
+  }
+  
+  function switchView(viewId) { 
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active')); 
+    document.getElementById(viewId).classList.add('active'); 
+  }
+  
+  function showError(err) { 
+    console.error(err); 
+    document.getElementById('error-msg').innerText = err || "An unexpected system error occurred."; 
+    switchView('form-view'); 
+  }
+</script>
+</body>
+</html>

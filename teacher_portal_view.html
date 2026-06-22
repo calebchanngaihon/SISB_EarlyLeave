@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <!-- Ensure perfect responsive viewport scaling for both desktop, tablet, and mobile browsers -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Teacher View - Student Early Leave Portal</title>
+  
+  <style>
+    /* =========================================================================
+       DESIGN SYSTEM & THEME TOKENS
+       ========================================================================= */
+    :root { 
+      --primary: #004b87;         /* Academy Blue */
+      --primary-hover: #00335e;   /* Darker Blue */
+      --success: #28a745;         /* Dynamic Unlocked Green */
+      --bg: #f4f7f6;              /* Soft Light Blue-Grey Background */
+      --card-bg: #ffffff;         /* Clean Card White */
+      --text-main: #1e293b;       /* Charcoal Text */
+      --text-muted: #64748b;     /* Muted Grey Text */
+      --border-color: #e2e8f0;   /* Light Border Line */
+    }
+    
+    /* Global Page Structure */
+    body { 
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+      background-color: var(--bg); 
+      margin: 0; 
+      padding: 20px 15px; 
+      color: var(--text-main);
+      box-sizing: border-box;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    
+    /* Central Dashboard Container */
+    .container { 
+      background: var(--card-bg); 
+      border-radius: 16px; 
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08); 
+      width: 100%; 
+      max-width: 600px; 
+      padding: 30px; 
+      box-sizing: border-box; 
+      border-top: 5px solid var(--primary);
+    }
+    
+    /* Responsive Header Layout */
+    .header-row { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      border-bottom: 2px solid var(--border-color); 
+      padding-bottom: 20px; 
+      margin-bottom: 24px; 
+      gap: 15px;
+    }
+    
+    .header-info {
+      text-align: left;
+    }
+    
+    .logo { 
+      max-width: 100px; 
+      height: auto;
+    }
+    
+    h2 { 
+      color: var(--primary); 
+      margin: 0; 
+      font-size: 20px; 
+      font-weight: 800;
+      line-height: 1.4;
+    }
+    
+    .date-text { 
+      color: var(--text-muted); 
+      font-size: 14px; 
+      margin-top: 6px; 
+      font-weight: 500;
+    }
+    
+    /* =========================================================================
+       DYNAMIC STUDENT CARD ELEMENT LAYOUTS
+       ========================================================================= */
+    .student-card { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      background: var(--card-bg); 
+      border: 1.5px solid var(--border-color); 
+      border-left: 6px solid var(--success); /* Visual indicator highlighting approved status */
+      padding: 16px; 
+      border-radius: 12px; 
+      margin-bottom: 12px; 
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-align: left;
+    }
+    
+    .student-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .student-info h4 { 
+      margin: 0 0 4px 0; 
+      color: var(--text-main); 
+      font-size: 16px; 
+      font-weight: 700;
+    }
+    
+    .student-info p { 
+      margin: 0; 
+      color: var(--text-muted); 
+      font-size: 14px; 
+      font-weight: 500;
+    }
+    
+    /* Accent Time Indicator */
+    .time-badge { 
+      background: #e6f4ea; 
+      color: #137333; 
+      padding: 8px 16px; 
+      border-radius: 30px; 
+      font-weight: 800; 
+      font-size: 15px; 
+      letter-spacing: 0.5px;
+      border: 1px solid #ceead6;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    
+    /* Loader & Empty States */
+    .spinner { 
+      border: 4px solid #f3f3f3; 
+      border-top: 4px solid var(--primary); 
+      border-radius: 50%; 
+      width: 32px; 
+      height: 32px; 
+      animation: spin 1s linear infinite; 
+      margin: 30px auto; 
+    }
+    @keyframes spin { 
+      100% { transform: rotate(360deg); } 
+    }
+    
+    .empty-state { 
+      text-align: center; 
+      color: var(--text-muted); 
+      padding: 40px 10px; 
+      font-style: italic; 
+      font-size: 15px;
+    }
+    
+    /* Controls and Refresh Buttons */
+    .refresh-btn { 
+      background-color: var(--card-bg); 
+      color: var(--text-main); 
+      border: 1.5px solid var(--border-color); 
+      padding: 10px 20px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      font-weight: 700;
+      display: inline-flex; 
+      align-items: center;
+      gap: 8px;
+      margin: 24px auto 0; 
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .refresh-btn:hover { 
+      background-color: #f8fafc; 
+      border-color: var(--text-muted);
+    }
+    .refresh-btn:active {
+      background-color: #f1f5f9;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  
+  <!-- HEADER CONTROLS AND BRAND LOGO -->
+  <div class="header-row">
+    <div class="header-info">
+      <h2>Approved Early Leave Registry</h2>
+      <div class="date-text" id="today-date">Loading Registry Calendar Date...</div>
+    </div>
+    <!-- Dynamically loaded secure template variable -->
+    <img src="<?= SCHOOL_LOGO_URL ?>" alt="School Logo" class="logo">
+  </div>
+
+  <!-- LOADING FEEDBACK INDICATOR -->
+  <div id="loading-spinner" class="spinner"></div>
+  
+  <!-- CONTAINER TARGET FOR STUDENT LIST GENERATION -->
+  <div id="student-list"></div>
+
+  <!-- INTERACTIVE CONTROLS -->
+  <div style="text-align: center;">
+    <button class="refresh-btn" onclick="fetchData()">
+      <span>🔄</span> Refresh Active List
+    </button>
+  </div>
+</div>
+
+<script>
+  // Initialize configuration and initial dataset pull on DOM Mount
+  window.onload = function() {
+    // Standardize dates to target timezone specifically
+    const options = { 
+      timeZone: "Asia/Bangkok", 
+      weekday: 'long', 
+      month: 'long', 
+      day: 'numeric',
+      year: 'numeric'
+    };
+    document.getElementById('today-date').innerText = new Date().toLocaleDateString('en-US', options);
+    fetchData();
+  };
+
+  /**
+   * Safe asynchronous gateway that pulls compiled list from backend spreadsheet 
+   * and handles connection states gracefully inside the browser view.
+   */
+  function fetchData() {
+    document.getElementById('loading-spinner').style.display = 'block';
+    document.getElementById('student-list').innerHTML = '';
+    
+    google.script.run
+      .withSuccessHandler(renderList)
+      .withFailureHandler((err) => {
+        document.getElementById('loading-spinner').style.display = 'none';
+        document.getElementById('student-list').innerHTML = `
+          <div class="empty-state" style="color: var(--danger); font-weight: 600;">
+            ⚠️ Unable to contact registry database. Please reload or check permissions.
+          </div>
+        `;
+      })
+      .getTodayApprovedLeaves();
+  }
+
+  /**
+   * Transforms raw student leaf records into formatted card UI lists.
+   * * @param {Array<Object>} students Array of today's departure records.
+   */
+  function renderList(students) {
+    document.getElementById('loading-spinner').style.display = 'none';
+    const listDiv = document.getElementById('student-list');
+    
+    // Fallback View if no students have matching records approved today
+    if (!students || students.length === 0) {
+      listDiv.innerHTML = `<div class="empty-state">No early leaves have been authorized by the office today yet.</div>`;
+      return;
+    }
+
+    let html = '';
+    students.forEach(s => {
+      html += `
+        <div class="student-card">
+          <div class="student-info">
+            <h4>${escapeHTML(s.nickname)}</h4>
+            <p>Class ${escapeHTML(s.className)}</p>
+          </div>
+          <div class="time-badge">${escapeHTML(s.time)}</div>
+        </div>
+      `;
+    });
+    
+    listDiv.innerHTML = html;
+  }
+
+  /**
+   * Helper utility to secure inputs and prevent Cross-Site Scripting (XSS) in dynamic templates.
+   */
+  function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+</script>
+
+</body>
+</html>
